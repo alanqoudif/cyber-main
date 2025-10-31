@@ -1,0 +1,128 @@
+// Prisma schema used as reference for Supabase tables.
+// This project connects to Supabase directly; Prisma migrations are not executed.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum EventType {
+  OPEN
+  CLICK
+  REPORT
+  IGNORE
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  name       String?
+  role       Role      @default(USER)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  campaigns  Campaign[] @relation("CampaignOwner")
+  events     Event[]
+  riskScores RiskScore[]
+  emailLogs  EmailLog[]
+}
+
+model Campaign {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  createdBy   String       @map("created_by")
+  owner       User         @relation("CampaignOwner", fields: [createdBy], references: [id])
+  recipients  Recipient[]
+  events      Event[]
+  riskScores  RiskScore[]
+  emailLogs   EmailLog[]
+  linkScans   LinkScan[]
+}
+
+model Recipient {
+  id         String    @id @default(uuid())
+  email      String
+  name       String?
+  campaignId String    @map("campaign_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  events     Event[]
+}
+
+model Event {
+  id          String     @id @default(uuid())
+  type        EventType
+  campaignId  String?    @map("campaign_id")
+  recipientId String?    @map("recipient_id")
+  userId      String?    @map("user_id")
+  meta        Json?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  campaign    Campaign?  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient   Recipient? @relation(fields: [recipientId], references: [id], onDelete: SetNull)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model RiskScore {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  score      Int      @default(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+}
+
+model Lesson {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  description String?
+  content     Json
+  duration    Int?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+}
+
+model EmailLog {
+  id          String    @id @default(uuid())
+  campaignId  String?   @map("campaign_id")
+  recipientId String?   @map("recipient_id")
+  userId      String?   @map("user_id")
+  status      String
+  subject     String?
+  error       String?
+  meta        Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient   Recipient? @relation(fields: [recipientId], references: [id], onDelete: SetNull)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model LinkScan {
+  id          String    @id @default(uuid())
+  campaignId  String?   @map("campaign_id")
+  url         String
+  scanId      String?   @map("scan_id")
+  status      String    @default("pending")
+  riskLabel   String?   @map("risk_label")
+  details     Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([url])
+}

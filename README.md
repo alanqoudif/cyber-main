@@ -1,36 +1,166 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CyberMirror 2.0
+
+A comprehensive educational platform for phishing simulation and security awareness training built with Next.js, Tailwind CSS, and Supabase.
+
+## Features
+
+- **User Authentication**: Secure login/signup with Supabase Auth
+- **Admin Dashboard**: Manage campaigns, users, and view detailed reports
+- **User Dashboard**: Track interactions, view risk scores, and access learning materials
+- **Campaign Management**: Create and manage phishing simulation campaigns
+- **Email System**: Send educational phishing emails with tracking
+- **Landing Pages**: Dynamic landing pages for each campaign with event tracking
+- **Risk Scoring**: Automatic risk score calculation based on user interactions
+- **Event Tracking**: Comprehensive tracking of opens, clicks, reports, and ignores
+- **Threat Map**: Visual 3D globe showing threat patterns and activities
+- **Learning Module**: Educational lessons about phishing and security best practices
+- **CSV Export**: Export reports and event data
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS 4
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Email**: Nodemailer
+- **3D Visualization**: Three.js, React Three Fiber
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 20+
+- npm or yarn
+- Supabase account and project
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd cyber-main
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_FROM="CyberMirror <no-reply@cybermirror.local>"
 
-## Learn More
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Run database migrations:
+The database schema is already set up in Supabase. If you need to apply migrations, use the Supabase dashboard or CLI.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Seed the database (optional):
+```bash
+npm run seed
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This will create:
+- Admin user: `admin@cybermirror.local` / `admin123`
+- Regular user: `user@cybermirror.local` / `user123`
+- Sample campaign with recipients
 
-## Deploy on Vercel
+6. Start the development server:
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+7. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── auth/           # Authentication pages
+│   ├── dashboard/      # Dashboard pages (user & admin)
+│   ├── campaigns/      # Campaign management pages
+│   ├── lp/            # Landing pages for campaigns
+│   ├── learn/         # Learning module
+│   └── api/           # API routes
+├── components/
+│   ├── admin/         # Admin-specific components
+│   ├── campaigns/     # Campaign components
+│   ├── layout/        # Layout components
+│   └── ui/            # Reusable UI components
+├── lib/
+│   ├── supabase/      # Supabase client utilities
+│   ├── email/         # Email templates and transporter
+│   ├── auth.ts        # Authentication helpers
+│   └── risk-score.ts  # Risk scoring algorithm
+└── scripts/
+    └── seed.ts        # Database seeding script
+```
+
+## Key Features Explained
+
+### Risk Scoring
+
+The platform uses a simple risk scoring algorithm:
+- **CLICK**: +5 points (high risk)
+- **OPEN**: +1 point (low risk)
+- **REPORT**: -4 points (good behavior)
+- **IGNORE**: 0 points (neutral)
+
+Scores are calculated automatically when events are tracked and stored per user/campaign.
+
+### Event Tracking
+
+Events are tracked automatically when:
+- A landing page is opened (OPEN)
+- A link is clicked (CLICK)
+- A phishing attempt is reported (REPORT)
+- An email is ignored (IGNORE)
+
+Each event includes metadata such as IP address, user agent, and timestamp.
+
+### Email System
+
+The platform uses Nodemailer to send phishing simulation emails. For local development, you can use Mailpit or a local SMTP server. Configure SMTP settings in your `.env.local` file.
+
+## Security Considerations
+
+- Row Level Security (RLS) is enabled on all database tables
+- Users can only view their own data (unless admin)
+- Admins have full access to manage campaigns and view reports
+- IP addresses are anonymized in reports
+- No sensitive real data should be used in testing
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run seed` - Seed the database with test data
+
+### Database Schema
+
+The database includes the following tables:
+- `users` - User profiles (extends Supabase Auth)
+- `campaigns` - Phishing simulation campaigns
+- `recipients` - Email recipients for campaigns
+- `events` - Tracked user interactions
+- `risk_scores` - Calculated risk scores per user/campaign
+
+## License
+
+This project is part of a university graduation project and is for educational purposes.
+
+## Support
+
+For issues or questions, please contact the development team.
