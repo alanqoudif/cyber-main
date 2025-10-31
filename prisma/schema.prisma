@@ -126,3 +126,12 @@ model LinkScan {
   @@index([campaignId])
   @@index([url])
 }
+
+model ExperienceEvent {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  event     String
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

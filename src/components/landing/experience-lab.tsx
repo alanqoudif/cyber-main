@@ -3,21 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import {
-  Activity,
-  AlertTriangle,
-  Check,
-  ChevronRight,
-  FlagTriangleRight,
-  Link2,
-  Mail,
-  MessageSquare,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-} from "lucide-react";
+import { Activity, AlertTriangle, Check, FlagTriangleRight, Link2, Mail, ShieldCheck, Sparkles } from "lucide-react";
 
-type ToolKey = "email" | "link" | "incident" | "sms";
+type ToolKey = "email" | "link";
 
 type Tool = {
   key: ToolKey;
@@ -29,65 +17,107 @@ type Tool = {
 const tools: Tool[] = [
   {
     key: "email",
-    title: "Phishing Email Theater",
-    description: "Step inside live inbox replays and surface the flags before a risky click.",
+    title: "Phishing Drill",
+    description: "Step into the simulated inbox, tap the hotspots, and decide how to respond in real time.",
     icon: Mail,
   },
   {
     key: "link",
-    title: "Link Sandbox Scanner",
-    description: "Drop custom URLs and watch the forensic sweep animate in real time.",
+    title: "Link Sandbox",
+    description: "Paste suspicious URLs and watch the sandbox animate each inspection phase.",
     icon: Link2,
-  },
-  {
-    key: "incident",
-    title: "Incident War Room",
-    description: "Practice the response script that unfolds right after a campaign fires.",
-    icon: Activity,
-  },
-  {
-    key: "sms",
-    title: "SMS Bait Simulator",
-    description: "Replay mobile smishing lures and rehearse your safest replies.",
-    icon: Smartphone,
   },
 ];
 
+const toolThemes: Record<
+  ToolKey,
+  {
+    headline: string;
+    subcopy: string;
+    backdrop: string;
+  }
+> = {
+  email: {
+    headline: "Experience a live phishing lure from the first click.",
+    subcopy: "Reveal sender details, hover links, and make the call. Feedback appears the moment you act.",
+    backdrop:
+      "radial-gradient(circle at 20% 30%, rgba(244, 114, 182, 0.28), transparent 60%), radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.18), transparent 65%)",
+  },
+  link: {
+    headline: "Launch the browser sandbox and trace every signal.",
+    subcopy: "Certificates, redirects, payload checks—all rendered as the scan progresses.",
+    backdrop:
+      "radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.26), transparent 60%), radial-gradient(circle at 78% 28%, rgba(99, 102, 241, 0.18), transparent 65%)",
+  },
+};
+
 export function ExperienceLab() {
   const [activeTool, setActiveTool] = useState<ToolKey>("email");
+  const activeTheme = toolThemes[activeTool];
 
   return (
     <div className="lab-surface relative overflow-hidden rounded-[28px] border border-border/60 bg-surface/95 p-6 shadow-xl backdrop-blur md:p-8">
       <div className="lab-gradient" aria-hidden />
       <div className="lab-constellation" aria-hidden />
-      <div className="grid gap-6 md:grid-cols-[minmax(220px,250px)_minmax(0,1fr)] md:items-start">
-        <div className="flex flex-col gap-3 z-10">
-          {tools.map((tool) => {
-            const Icon = tool.icon;
-            const isActive = tool.key === activeTool;
+      <motion.div
+        key={activeTool}
+        className="absolute inset-0 z-0 opacity-60"
+        style={{ background: activeTheme.backdrop }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.6 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        aria-hidden
+      />
+      <div className="grid gap-6 md:grid-cols-[minmax(220px,260px)_minmax(0,1fr)] md:items-start relative z-10">
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <motion.p
+              key={`headline-${activeTool}`}
+              className="text-sm font-semibold text-foreground"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              {activeTheme.headline}
+            </motion.p>
+            <motion.p
+              key={`subcopy-${activeTool}`}
+              className="text-xs text-muted leading-5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              {activeTheme.subcopy}
+            </motion.p>
+          </div>
+          <div className="flex flex-col gap-3">
+            {tools.map((tool) => {
+              const Icon = tool.icon;
+              const isActive = tool.key === activeTool;
 
-            return (
-              <motion.button
-                key={tool.key}
-                type="button"
-                onClick={() => setActiveTool(tool.key)}
-                className={`flex flex-col gap-2 rounded-2xl border border-transparent bg-transparent p-4 text-left transition-all ${
-                  isActive
-                    ? "bg-surface-muted/70 text-foreground shadow-sm ring-2 ring-accent/50"
-                    : "hover:bg-surface-muted/60 hover:text-foreground/90 text-muted"
-                }`}
-                aria-pressed={isActive}
-                whileTap={{ scale: 0.98 }}
-                whileHover={{ translateX: isActive ? 0 : 4 }}
-              >
-                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Icon className="h-4 w-4 text-accent" />
-                  {tool.title}
-                </span>
-                <span className="text-xs text-muted">{tool.description}</span>
-              </motion.button>
-            );
-          })}
+              return (
+                <motion.button
+                  key={tool.key}
+                  type="button"
+                  onClick={() => setActiveTool(tool.key)}
+                  className={`flex flex-col gap-2 rounded-2xl border border-transparent bg-transparent p-4 text-left transition-all ${
+                    isActive
+                      ? "bg-surface-muted/80 text-foreground shadow-sm ring-2 ring-accent/50"
+                      : "hover:bg-surface-muted/60 hover:text-foreground/90 text-muted"
+                  }`}
+                  aria-pressed={isActive}
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ translateX: isActive ? 0 : 4 }}
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Icon className="h-4 w-4 text-accent" />
+                    {tool.title}
+                  </span>
+                  <span className="text-xs text-muted">{tool.description}</span>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
         <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/92 p-4 md:p-6">
           <AnimatePresence mode="wait">
@@ -100,8 +130,6 @@ export function ExperienceLab() {
             >
               {activeTool === "email" && <EmailExperience />}
               {activeTool === "link" && <LinkExperience />}
-              {activeTool === "incident" && <IncidentExperience />}
-              {activeTool === "sms" && <SmsExperience />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -794,272 +822,3 @@ function LinkExperience() {
   );
 }
 
-type IncidentStep = {
-  title: string;
-  detail: string;
-  action: string;
-};
-
-const incidentSteps: IncidentStep[] = [
-  {
-    title: "Kick-off huddle",
-    detail: "Security lead sets expectations, frames the threat story, and reminds everyone this is a safe lab.",
-    action: "Remind the group: quick reports beat quick clicks.",
-  },
-  {
-    title: "Simulation launch",
-    detail: "We send the phishing wave with guardrails. Real responses light up the live engagement globe.",
-    action: "Call out the first reported email and celebrate the spot.",
-  },
-  {
-    title: "Coaching nudge",
-    detail: "Clickers receive a 60-second micro-lesson tailored to the lure they saw, right inside the lab.",
-    action: "Drop the lesson link in chat or SMS immediately.",
-  },
-  {
-    title: "Leadership wrap",
-    detail: "Automated digest summarises metrics, notable escalations, and the next experiment to run.",
-    action: "Send the single-slide recap before the day ends.",
-  },
-];
-
-function IncidentExperience() {
-  const [stepIndex, setStepIndex] = useState<number>(0);
-  const step = incidentSteps[stepIndex];
-  const progress = ((stepIndex + 1) / incidentSteps.length) * 100;
-
-  return (
-    <div className="grid gap-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.32em] text-muted">Response drill</p>
-          <h3 className="text-lg font-semibold text-foreground">Practice the post-incident conversation.</h3>
-        </div>
-        <motion.button
-          type="button"
-          onClick={() => setStepIndex((index) => (index + 1) % incidentSteps.length)}
-          className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-1.5 text-xs font-semibold text-background transition hover:-translate-y-[15%]"
-          whileTap={{ scale: 0.95 }}
-        >
-          Advance step
-          <ChevronRight className="h-3.5 w-3.5" />
-        </motion.button>
-      </header>
-
-      <motion.div
-        className="rounded-2xl border border-border/60 bg-surface p-4"
-        key={step.title}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="relative h-12 w-12 rounded-2xl bg-accent/15">
-            <div className="absolute inset-1.5 rounded-2xl border border-accent/40" />
-            <Activity className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-accent" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.32em] text-muted">Step {stepIndex + 1}</p>
-            <h4 className="text-base font-semibold text-foreground">{step.title}</h4>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-muted">{step.detail}</p>
-        <div className="mt-4 rounded-xl border border-border/60 bg-surface-muted/80 px-4 py-3 text-xs text-foreground/85">
-          <p className="font-semibold uppercase tracking-[0.28em] text-muted">Action cue</p>
-          <p className="mt-2 flex items-start gap-2 text-sm text-foreground">
-            <ChevronRight className="mt-0.5 h-3.5 w-3.5 text-accent" />
-            {step.action}
-          </p>
-        </div>
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-          <motion.div
-            className="h-full bg-accent"
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-          />
-        </div>
-      </motion.div>
-
-      <ul className="grid gap-2 text-xs text-muted">
-        {incidentSteps.map((item, index) => (
-          <li
-            key={item.title}
-            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${
-              index === stepIndex ? "border-accent/60 text-foreground" : "border-border/60"
-            }`}
-          >
-            <ShieldCheck className={`h-3.5 w-3.5 ${index === stepIndex ? "text-accent" : "text-muted"}`} />
-            {item.title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-type SmsMessage = {
-  sender: "attacker" | "user";
-  text: string;
-  highlight?: boolean;
-};
-
-type SmsScenario = {
-  id: string;
-  title: string;
-  summary: string;
-  messages: SmsMessage[];
-  tells: {
-    title: string;
-    detail: string;
-  }[];
-};
-
-const smsScenarios: SmsScenario[] = [
-  {
-    id: "delivery",
-    title: "Missed parcel notification",
-    summary: "Attackers impersonate a courier to rush you into paying a bogus fee.",
-    messages: [
-      { sender: "attacker", text: "[DHL] We tried to deliver your parcel. Pay SAR 9.50 to release it.", highlight: true },
-      { sender: "user", text: "I wasn't expecting a parcel. Where is it coming from?" },
-      { sender: "attacker", text: "Follow secure link to verify now: dhl-payments-support.com/track", highlight: true },
-      { sender: "attacker", text: "If you delay 30 mins the parcel returns to sender.", highlight: true },
-    ],
-    tells: [
-      {
-        title: "Unexpected request",
-        detail: "Legitimate courier services do not text you for payment without prior email confirmation.",
-      },
-      {
-        title: "Lookalike domain",
-        detail: "dhl-payments-support.com is unrelated to the real dhl.com infrastructure.",
-      },
-      {
-        title: "Pressure countdown",
-        detail: "Countdowns in SMS are engineered to override your normal checks.",
-      },
-    ],
-  },
-  {
-    id: "it-reset",
-    title: "IT reset code theft",
-    summary: "An attacker pretends to be internal IT to steal the MFA code in transit.",
-    messages: [
-      { sender: "attacker", text: "[IT] We detected risky sign-in. Reply with the 6-digit code you just received.", highlight: true },
-      { sender: "user", text: "Is this Ahmed from IT? Why do you need the code?" },
-      { sender: "attacker", text: "Yes Ahmed here. System won't unlock unless you confirm. Need code now.", highlight: true },
-      { sender: "attacker", text: "Delay triggers account suspension.", highlight: true },
-    ],
-    tells: [
-      {
-        title: "Outbound request for MFA",
-        detail: "IT will never ask for the MFA code that protects your account.",
-      },
-      {
-        title: "No confirmation channel",
-        detail: "They avoid voice calls or official ticketing to stay anonymous.",
-      },
-    ],
-  },
-];
-
-function SmsExperience() {
-  const [activeScenario, setActiveScenario] = useState<SmsScenario>(smsScenarios[0]);
-  const [showTells, setShowTells] = useState<boolean>(false);
-
-  return (
-    <div className="grid gap-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.32em] text-muted">Mobile lab</p>
-          <h3 className="text-lg font-semibold text-foreground">{activeScenario.title}</h3>
-          <p className="text-sm text-muted">{activeScenario.summary}</p>
-        </div>
-        <motion.button
-          type="button"
-          onClick={() => setShowTells((prev) => !prev)}
-          className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-xs font-semibold text-muted transition hover:text-foreground hover:bg-surface-muted"
-          whileTap={{ scale: 0.95 }}
-        >
-          <MessageSquare className="h-3.5 w-3.5 text-accent" />
-          {showTells ? "Hide attacker tells" : "Highlight attacker tells"}
-        </motion.button>
-      </header>
-
-      <div className="rounded-2xl border border-border/70 bg-surface px-4 py-5 space-y-4 shadow-inner">
-        <div className="grid gap-3 text-xs text-muted">
-          {smsScenarios.map((scenario) => (
-            <motion.button
-              key={scenario.id}
-              type="button"
-              onClick={() => setActiveScenario(scenario)}
-              className={`rounded-full border px-3 py-1.5 text-left transition ${
-                scenario.id === activeScenario.id
-                  ? "border-accent bg-accent/10 text-foreground"
-                  : "border-border text-muted hover:text-foreground"
-              }`}
-              whileTap={{ scale: 0.96 }}
-            >
-              {scenario.title}
-            </motion.button>
-          ))}
-        </div>
-
-        <div className="rounded-xl border border-border/70 bg-background/95 p-4">
-          <AnimatePresence initial={false} mode="wait">
-            <motion.ul
-              key={activeScenario.id}
-              className="grid gap-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              {activeScenario.messages.map((message, index) => {
-                const isAttacker = message.sender === "attacker";
-                return (
-                  <li key={`${activeScenario.id}-message-${index}`} className={`flex ${isAttacker ? "justify-start" : "justify-end"}`}>
-                    <motion.div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${
-                        isAttacker ? "bg-rose-500/10 text-rose-600 border border-rose-500/30" : "bg-accent/10 text-accent border border-accent/30"
-                      }`}
-                      animate={{
-                        scale: showTells && message.highlight && isAttacker ? [1, 1.04, 1] : 1,
-                      }}
-                      transition={{ duration: 0.8, repeat: showTells && message.highlight && isAttacker ? Infinity : 0 }}
-                    >
-                      {message.text}
-                    </motion.div>
-                  </li>
-                );
-              })}
-            </motion.ul>
-          </AnimatePresence>
-        </div>
-
-        {showTells && (
-          <motion.ul
-            className="grid gap-2 rounded-xl border border-border/60 bg-surface-muted px-4 py-3 text-xs text-foreground/85"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {activeScenario.tells.map((tell) => (
-              <li key={tell.title} className="flex gap-2">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-amber-500" />
-                <div>
-                  <p className="font-semibold text-foreground">{tell.title}</p>
-                  <p className="text-muted">{tell.detail}</p>
-                </div>
-              </li>
-            ))}
-          </motion.ul>
-        )}
-      </div>
-
-      <p className="text-xs text-muted">
-        Tip: Never reply directly to unknown senders. Call the published support number or use the official app to confirm.
-      </p>
-    </div>
-  );
-}

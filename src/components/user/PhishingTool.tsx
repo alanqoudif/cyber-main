@@ -4,6 +4,7 @@ import { useMemo, useState, type ComponentType } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { trackExperienceEvent } from '@/lib/telemetry'
 import {
   Eye,
   MailWarning,
@@ -100,16 +101,36 @@ export function PhishingTool() {
     setActiveClue(clueId)
     setDecision(null)
     setShowFakePage(false)
-    setRevealedClues((prev) => (prev.includes(clueId) ? prev : [...prev, clueId]))
+    setRevealedClues((prev) => {
+      if (prev.includes(clueId)) {
+        return prev
+      }
+      const next = [...prev, clueId]
+      const nextProgress = Math.round((next.length / maxSignals) * 100)
+      trackExperienceEvent('phishing_clue_revealed', {
+        clueId,
+        totalRevealed: next.length,
+        progress: nextProgress,
+      })
+      return next
+    })
   }
 
   const handleDecision = (id: DecisionId) => {
     setDecision(id)
     setActiveClue(null)
     setShowFakePage(id === 'open')
+    trackExperienceEvent('phishing_decision_made', {
+      decision: id,
+      revealedSignals: revealedClues.length,
+    })
   }
 
   const resetScenario = () => {
+    trackExperienceEvent('phishing_drill_reset', {
+      revealedSignals: revealedClues.length,
+      decision: decision ?? 'none',
+    })
     setRevealedClues([])
     setActiveClue(null)
     setDecision(null)

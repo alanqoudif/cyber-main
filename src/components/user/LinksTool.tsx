@@ -17,6 +17,7 @@ import {
   CircleCheck,
   CircleDot,
 } from 'lucide-react'
+import { trackExperienceEvent } from '@/lib/telemetry'
 
 type Verdict = 'harmless' | 'suspicious' | 'malicious'
 
@@ -295,6 +296,21 @@ export function LinksTool() {
       return
     }
 
+    const trimmedUrl = url.trim()
+    let host: string | null = null
+    try {
+      host = new URL(trimmedUrl).hostname
+    } catch {
+      host = null
+    }
+
+    trackExperienceEvent('link_scan_started', {
+      urlHost: host,
+      inputLength: trimmedUrl.length,
+      isSample: Boolean(selectedSample),
+      sampleId: selectedSample?.id ?? null,
+    })
+
     setIsScanning(true)
     setAnalysis(null)
     setError(null)
@@ -304,14 +320,32 @@ export function LinksTool() {
     for (const phase of phases) {
       setPhaseStatuses((prev) => ({ ...prev, [phase.id]: 'active' }))
       setActivePhase(phase.id)
+      trackExperienceEvent('link_phase_transition', {
+        phase: phase.id,
+        status: 'active',
+        urlHost: host,
+      })
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 600))
       setPhaseStatuses((prev) => ({ ...prev, [phase.id]: 'complete' }))
+      trackExperienceEvent('link_phase_transition', {
+        phase: phase.id,
+        status: 'complete',
+        urlHost: host,
+      })
     }
 
-    const result = analyseUrl(url.trim())
+    const result = analyseUrl(trimmedUrl)
     setAnalysis(result)
     setIsScanning(false)
+    trackExperienceEvent('link_scan_completed', {
+      urlHost: host,
+      verdict: result.verdict,
+      cueSummary: result.cues.map((cue) => ({ id: cue.id, status: cue.status })),
+      recommendationCount: result.recommendations.length,
+      isSample: Boolean(selectedSample),
+      sampleId: selectedSample?.id ?? null,
+    })
   }
 
   const verdictInfo = analysis ? verdictStyles[analysis.verdict] : null
