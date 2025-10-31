@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Shield, LogOut, LayoutDashboard, Megaphone, Users, BookOpen, Globe } from 'lucide-react'
+import { Shield, LogOut, Megaphone, Globe, Search } from 'lucide-react'
 
 interface NavbarProps {
   userRole?: 'ADMIN' | 'USER'
@@ -70,22 +70,21 @@ export function Navbar({ userRole = 'USER' }: NavbarProps) {
                       Campaigns
                     </div>
                   </Link>
+                  <Link
+                    href="/dashboard/admin/url-scan"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive('/dashboard/admin/url-scan')
+                        ? 'bg-accent/12 text-accent'
+                        : 'text-muted hover:text-foreground hover:bg-surface-muted'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Search className="h-4 w-4" />
+                      Link Scanner
+                    </div>
+                  </Link>
                 </>
               )}
-
-              <Link
-                href="/learn"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/learn')
-                    ? 'bg-accent/12 text-accent'
-                    : 'text-muted hover:text-foreground hover:bg-surface-muted'
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4" />
-                  Learn
-                </div>
-              </Link>
 
               <Link
                 href="/dashboard/threat-map"
@@ -115,4 +114,3 @@ export function Navbar({ userRole = 'USER' }: NavbarProps) {
     </nav>
   )
 }
-
