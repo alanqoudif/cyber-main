@@ -56,7 +56,7 @@ export function ExperienceLab() {
   const activeTheme = toolThemes[activeTool];
 
   return (
-    <div className="lab-surface relative overflow-hidden rounded-[28px] border border-border/60 bg-surface/95 p-6 shadow-xl backdrop-blur md:p-8">
+    <div className="lab-surface relative rounded-[32px] border border-border/60 bg-surface/95 px-6 py-8 shadow-xl backdrop-blur md:px-10 md:py-10 lg:px-12">
       <div className="lab-gradient" aria-hidden />
       <div className="lab-constellation" aria-hidden />
       <motion.div
@@ -68,7 +68,7 @@ export function ExperienceLab() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         aria-hidden
       />
-      <div className="grid gap-6 md:grid-cols-[minmax(220px,260px)_minmax(0,1fr)] md:items-start relative z-10">
+      <div className="relative z-10 grid gap-8 md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:items-start lg:gap-10">
         <div className="flex flex-col gap-4">
           <div className="space-y-2">
             <motion.p
@@ -119,19 +119,25 @@ export function ExperienceLab() {
             })}
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/92 p-4 md:p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTool}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              {activeTool === "email" && <EmailExperience />}
-              {activeTool === "link" && <LinkExperience />}
-            </motion.div>
-          </AnimatePresence>
+        <div className="relative flex items-center justify-center">
+          <div
+            className="pointer-events-none absolute inset-0 z-[1] rounded-[40px] bg-gradient-to-br from-accent/20 via-purple-500/10 to-transparent blur-3xl opacity-75"
+            aria-hidden
+          />
+          <div className="relative z-[2] w-full max-w-[560px] rounded-[36px] border border-border/70 bg-background/95 p-4 shadow-[0_40px_90px_rgba(15,23,42,0.28)] md:p-6 lg:p-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTool}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                {activeTool === "email" && <EmailExperience />}
+                {activeTool === "link" && <LinkExperience />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
@@ -821,4 +827,3 @@ function LinkExperience() {
     </div>
   );
 }
-
