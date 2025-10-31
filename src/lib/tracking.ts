@@ -10,13 +10,15 @@ export interface TrackEventPayload {
   meta?: Record<string, unknown>
 }
 
-export type SupabaseClientLike = {
-  from<T extends string>(table: T): {
-    insert(values: Record<string, unknown> | Record<string, unknown>[]): Promise<PostgrestSingleResponse<any>>
-    select(columns?: string): Promise<PostgrestSingleResponse<any>>
-    eq(column: string, value: any): ReturnType<SupabaseClientLike['from']>
-    order(column: string, opts: { ascending: boolean }): ReturnType<SupabaseClientLike['from']>
-  }
+type SupabaseQueryBuilderLike = {
+  insert(values: Record<string, unknown> | Record<string, unknown>[]): Promise<PostgrestSingleResponse<any>>
+  select(columns?: string): Promise<PostgrestSingleResponse<any>>
+  eq(column: string, value: any): SupabaseQueryBuilderLike
+  order(column: string, opts: { ascending: boolean }): SupabaseQueryBuilderLike
+}
+
+export interface SupabaseClientLike {
+  from<T extends string>(table: T): SupabaseQueryBuilderLike
 }
 
 export function anonymizeIp(ip: string | null | undefined): string | null {

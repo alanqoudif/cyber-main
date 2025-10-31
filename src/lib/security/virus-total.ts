@@ -15,10 +15,11 @@ export interface VirusTotalScanResult {
 }
 
 function getApiKey(): string | null {
-  if (!process.env.VIRUSTOTAL_API_KEY) {
-    return null
-  }
-  return process.env.VIRUSTOTAL_API_KEY
+  // Check both environment variable names for compatibility
+  const apiKey = process.env.VIRUSTOTAL_API_KEY || 
+                 process.env.NEXT_PUBLIC_VIRUSTOTAL_API_KEY || 
+                 '5a34733d24ca3f263f2df24bc5caf848209a9cfb652860b12073c35504a94921'
+  return apiKey
 }
 
 function encodeUrl(url: string): string {
@@ -32,85 +33,136 @@ export function getUrlIdentifier(url: string): string {
 export async function submitUrlForScan(url: string): Promise<VirusTotalScanResult | null> {
   const apiKey = getApiKey()
   if (!apiKey) {
-    return null
-  }
-
-  const response = await fetch(`${API_ROOT}/urls`, {
-    method: 'POST',
-    headers: {
-      'x-apikey': apiKey,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `url=${encodeURIComponent(url)}`,
-  })
-
-  if (!response.ok) {
-    const detail = await safeJson(response)
     return {
       id: 'error',
       url,
       verdict: 'unknown',
       status: 'error',
-      detail: typeof detail === 'string' ? detail : JSON.stringify(detail),
+      detail: 'API key not configured',
     }
   }
 
-  const payload = await response.json()
-  const analysisId: string = payload?.data?.id
-  return {
-    id: analysisId,
-    url,
-    verdict: 'unknown',
-    status: 'queued',
+  try {
+    const response = await fetch(`${API_ROOT}/urls`, {
+      method: 'POST',
+      headers: {
+        'x-apikey': apiKey,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `url=${encodeURIComponent(url)}`,
+    })
+
+    if (!response.ok) {
+      const detail = await safeJson(response)
+      const errorMessage = typeof detail === 'string' 
+        ? detail 
+        : (detail as any)?.error?.message || JSON.stringify(detail)
+      
+      console.error('VirusTotal submit error:', response.status, errorMessage)
+      
+      return {
+        id: 'error',
+        url,
+        verdict: 'unknown',
+        status: 'error',
+        detail: `VirusTotal API error (${response.status}): ${errorMessage}`,
+      }
+    }
+
+    const payload = await response.json()
+    const analysisId: string = payload?.data?.id
+    return {
+      id: analysisId,
+      url,
+      verdict: 'unknown',
+      status: 'queued',
+    }
+  } catch (error) {
+    console.error('VirusTotal submit exception:', error)
+    return {
+      id: 'error',
+      url,
+      verdict: 'unknown',
+      status: 'error',
+      detail: error instanceof Error ? error.message : String(error),
+    }
   }
 }
 
 export async function getUrlScanResult(url: string): Promise<VirusTotalScanResult | null> {
   const apiKey = getApiKey()
   if (!apiKey) {
-    return null
-  }
-
-  const identifier = encodeUrl(url)
-  const response = await fetch(`${API_ROOT}/urls/${identifier}`, {
-    headers: {
-      'x-apikey': apiKey,
-    },
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
-    const detail = await safeJson(response)
     return {
       id: 'error',
       url,
       verdict: 'unknown',
       status: 'error',
-      detail: typeof detail === 'string' ? detail : JSON.stringify(detail),
+      detail: 'API key not configured',
     }
   }
 
-  const payload = await response.json()
-  const data = payload?.data
-  const attributes = data?.attributes
-  const stats = attributes?.last_analysis_stats ?? {}
+  try {
+    const identifier = encodeUrl(url)
+    const response = await fetch(`${API_ROOT}/urls/${identifier}`, {
+      headers: {
+        'x-apikey': apiKey,
+      },
+      cache: 'no-store',
+    })
 
-  let verdict: VirusTotalVerdict = 'unknown'
-  if (typeof stats.malicious === 'number' && stats.malicious > 0) {
-    verdict = 'malicious'
-  } else if (typeof stats.suspicious === 'number' && stats.suspicious > 0) {
-    verdict = 'suspicious'
-  } else if (typeof stats.harmless === 'number' && stats.harmless > 0) {
-    verdict = 'harmless'
-  }
+    if (!response.ok) {
+      // If URL not found (404), return null so we can submit it
+      if (response.status === 404) {
+        return null
+      }
+      
+      const detail = await safeJson(response)
+      const errorMessage = typeof detail === 'string' 
+        ? detail 
+        : (detail as any)?.error?.message || JSON.stringify(detail)
+      
+      console.error('VirusTotal get result error:', response.status, errorMessage)
+      
+      return {
+        id: 'error',
+        url,
+        verdict: 'unknown',
+        status: 'error',
+        detail: `VirusTotal API error (${response.status}): ${errorMessage}`,
+      }
+    }
 
-  return {
-    id: data?.id ?? identifier,
-    url,
-    verdict,
-    status: 'completed',
-    lastAnalysisStats: stats,
-    lastAnalysisDate: attributes?.last_analysis_date,
+    const payload = await response.json()
+    const data = payload?.data
+    const attributes = data?.attributes
+    const stats = attributes?.last_analysis_stats ?? {}
+
+    let verdict: VirusTotalVerdict = 'unknown'
+    if (typeof stats.malicious === 'number' && stats.malicious > 0) {
+      verdict = 'malicious'
+    } else if (typeof stats.suspicious === 'number' && stats.suspicious > 0) {
+      verdict = 'suspicious'
+    } else if (typeof stats.harmless === 'number' && stats.harmless > 0) {
+      verdict = 'harmless'
+    }
+
+    return {
+      id: data?.id ?? identifier,
+      url,
+      verdict,
+      status: 'completed',
+      lastAnalysisStats: stats,
+      lastAnalysisDate: attributes?.last_analysis_date,
+    }
+  } catch (error) {
+    console.error('VirusTotal get result exception:', error)
+    return {
+      id: 'error',
+      url,
+      verdict: 'unknown',
+      status: 'error',
+      detail: error instanceof Error ? error.message : String(error),
+    }
   }
 }
 

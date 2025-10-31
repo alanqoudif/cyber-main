@@ -24,14 +24,18 @@ export async function POST(request: NextRequest) {
     if (userId && !campaignId) {
       const { data: campaigns, error } = await supabase
         .from('events')
-        .select('campaign_id', { distinct: true })
+        .select('campaign_id')
         .eq('user_id', userId)
 
       if (error) throw error
 
+      const uniqueCampaignIds = new Set<string>()
+
       let count = 0
       for (const record of campaigns ?? []) {
         if (!record.campaign_id) continue
+        if (uniqueCampaignIds.has(record.campaign_id)) continue
+        uniqueCampaignIds.add(record.campaign_id)
         await supabase.rpc('recalculate_risk_score', {
           p_user_id: userId,
           p_campaign_id: record.campaign_id,

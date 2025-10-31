@@ -9,6 +9,7 @@ import { CampaignList, type AdminCampaignSummary } from '@/components/admin/Camp
 import { UserList, type AdminUserSummary } from '@/components/admin/UserList'
 import { ReportsTable, type EventReportRow } from '@/components/admin/ReportsTable'
 import { CSVExport } from '@/components/admin/CSVExport'
+import { UrlScanner } from '@/components/admin/UrlScanner'
 import { Badge } from '@/components/ui/badge'
 import { BarChart3, Users, Mail, AlertTriangle, Plus } from 'lucide-react'
 
@@ -105,6 +106,7 @@ export default async function AdminDashboardPage() {
         <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <CampaignList campaigns={campaigns} />
           <div className="space-y-6">
+            <UrlScanner />
             <Card>
               <CardContent className="p-6 space-y-3">
                 <div className="flex items-center justify-between">

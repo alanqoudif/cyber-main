@@ -18,7 +18,6 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname === '/' ||
       request.nextUrl.pathname.startsWith('/auth') ||
       request.nextUrl.pathname.startsWith('/lp') ||
-      request.nextUrl.pathname.startsWith('/learn') ||
       request.nextUrl.pathname.startsWith('/_next')
     
     if (isPublicRoute) {
@@ -85,9 +84,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      * - lp/* (landing pages - public)
-     * - learn/* (learning pages - public)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|lp|learn).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|lp).*)',
   ],
 }
-

@@ -35,14 +35,16 @@ export async function sendCampaignEmails(
   const supabase = createServiceClient()
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
 
+  const recipientsBaseQuery = supabase.from('recipients').select('*').eq('campaign_id', campaignId)
+  const recipientsQuery =
+    recipientIds && recipientIds.length > 0
+      ? recipientsBaseQuery.in('id', recipientIds)
+      : recipientsBaseQuery
+
   const [{ data: campaign, error: campaignError }, { data: recipients, error: recipientsError }] =
     await Promise.all([
       supabase.from('campaigns').select('*').eq('id', campaignId).single(),
-      supabase
-        .from('recipients')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .in('id', recipientIds && recipientIds.length > 0 ? recipientIds : undefined),
+      recipientsQuery,
     ])
 
   if (campaignError) {

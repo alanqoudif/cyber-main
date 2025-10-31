@@ -133,10 +133,10 @@ export default function LandingPage() {
           )}
 
           <div className="pt-4">
-            <Link href="/learn">
+            <Link href="/auth/login">
               <Button>
                 <Shield className="h-4 w-4 mr-2" />
-                Learn More About Phishing
+                Launch Interactive Training
               </Button>
             </Link>
           </div>

@@ -5,28 +5,29 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
-  ShieldCheck,
-  GraduationCap,
-  LineChart,
-  Headset,
-  Inbox,
-  Sun,
-  Moon,
-  CheckCircle2,
   ArrowRight,
+  CheckCircle2,
+  Globe2,
+  Headset,
+  Layers,
+  Moon,
+  Sparkles,
+  Sun,
+  Target,
+  Wand2,
+  Workflow,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { ExperienceLab } from "@/components/landing/experience-lab";
 
 type Theme = "light" | "dark";
 
-type Feature = {
+type Highlight = {
   icon: LucideIcon;
   title: string;
-  description: string;
+  detail: string;
 };
 
-type Point = {
+type FlowPoint = {
   title: string;
   detail: string;
 };
@@ -46,80 +47,77 @@ const ThreatGlobe = dynamic<{ theme: Theme }>(
   }
 );
 
-const heroHighlights: Point[] = [
+const heroHighlights: Highlight[] = [
   {
-    title: "Launch in minutes",
-    detail: "Choose a phishing scenario and target list, then hit send with built-in guardrails.",
+    icon: Sparkles,
+    title: "Immersive from the first click",
+    detail: "Visitors land inside live labs with animations that react to every decision.",
   },
   {
-    title: "Clarity first",
-    detail: "See opens, clicks, and reports in a calm overview that calls out one recommended action.",
+    icon: Target,
+    title: "English-only journeys",
+    detail: "All story scripts, prompts, and tooltips stay in one clear language so teams stay focused.",
   },
   {
-    title: "Built for English & Arabic",
-    detail: "Works flawlessly across desktop and mobile with full RTL support when you need it.",
-  },
-];
-
-const features: Feature[] = [
-  {
-    icon: ShieldCheck,
-    title: "Simulation library",
-    description: "Real attack lookalikes curated for finance, government, and enterprise teams.",
-  },
-  {
-    icon: LineChart,
-    title: "Live risk dial",
-    description: "A single trend line showing your click-down and report-up progress each week.",
-  },
-  {
-    icon: GraduationCap,
-    title: "Micro-lessons",
-    description: "60-second explainers with adaptive quiz questions sent right after each mistake.",
-  },
-  {
-    icon: Inbox,
-    title: "Seamless delivery",
-    description: "OAuth-based connectors for Microsoft 365 and Google Workspace—no legacy SMTP pain.",
+    icon: Globe2,
+    title: "Role-based storylines",
+    detail: "Pick CFO, HR, or frontline experiences and launch them with one toggle.",
   },
 ];
 
-const loopSteps: Point[] = [
+const toolHighlights: Highlight[] = [
   {
-    title: "Plan & personalize",
-    detail: "Pick the threat story, brand it, and segment audiences with a clean drag-and-drop flow.",
+    icon: Layers,
+    title: "Scenario stack",
+    detail: "Phishing, smishing, USB drops, and executive whaling templates ready to deploy.",
   },
   {
-    title: "Simulate & observe",
-    detail: "We capture intent signals in real time and feed them into the rotating threat globe.",
+    icon: Wand2,
+    title: "Adaptive coaching",
+    detail: "Micro-lessons trigger right after a risky click with motion that mirrors the attack.",
   },
   {
-    title: "Coach & improve",
-    detail: "Auto-enroll risky users into short refreshers and surface wins to leadership weekly.",
+    icon: Workflow,
+    title: "Playable analytics",
+    detail: "Live risk dial, story timelines, and colour-safe dashboards designed for workshops.",
   },
 ];
 
-const supportPoints: Point[] = [
+const flowSteps: FlowPoint[] = [
   {
-    title: "Launch kit included",
-    detail: "Pre-written announcement email, poster, and intranet copy you can ship on day one.",
+    title: "Curate the narrative",
+    detail:
+      "Choose the social-engineering storyline, drop your brand voice in, and preload supporting assets for the facilitator.",
   },
   {
-    title: "Human guidance",
-    detail: "A regional security specialist joins your first review call and helps tune templates.",
+    title: "Activate the playground",
+    detail:
+      "Launch email, link, and SMS labs together. Participants explore, trigger animations, and submit reports in real time.",
+  },
+  {
+    title: "Debrief with clarity",
+    detail: "Generate a single-slide recap and full incident timeline to brief leadership within minutes.",
+  },
+];
+
+const supportPoints: FlowPoint[] = [
+  {
+    title: "Launch-day producer",
+    detail: "Our facilitator hosts the first interactive session, tunes pacing, and keeps the energy high.",
+  },
+  {
+    title: "Animation studio access",
+    detail: "Use our motion library—browser scans, inbox reveals, globe pulses—to match each storyline.",
   },
   {
     title: "Executive-ready briefs",
-    detail: "One-page PDF summary every Friday with key deltas and plain-language recommendations.",
+    detail: "Receive Friday summaries with behaviour shifts, highlights, and the next experiment to run.",
   },
 ];
 
 export default function Home() {
-  const router = useRouter();
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
-
-  // Auth redirect is handled by middleware
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -141,13 +139,13 @@ export default function Home() {
     setMounted(true);
 
     const mediaListener = (event: MediaQueryListEvent | MediaQueryList) => {
-      const nextTheme: Theme = "matches" in event ? (event.matches ? "dark" : "light") : mq.matches ? "dark" : "light";
+      const nextTheme: Theme =
+        "matches" in event ? (event.matches ? "dark" : "light") : mq.matches ? "dark" : "light";
       setTheme(nextTheme);
       document.body.dataset.theme = nextTheme;
       window.localStorage.setItem("cm-theme", nextTheme);
     };
 
-    // Support older browsers that use addListener.
     if (typeof mq.addEventListener === "function") {
       mq.addEventListener("change", mediaListener as EventListener);
     } else if (typeof mq.addListener === "function") {
@@ -201,34 +199,37 @@ export default function Home() {
           </div>
 
           <div className="grid gap-5 text-balance md:max-w-2xl">
-            <p className="eyebrow">Phishing awareness without the noise</p>
+            <p className="eyebrow">Immersive cyber awareness lab</p>
             <h1 className="text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-              A calm training platform that blends live simulations with a living threat globe.
+              The only training site that feels like a real attack—fully interactive, fully in English.
             </h1>
             <p className="text-lg text-muted md:text-xl">
-              CyberMirror keeps the interface quiet, the guidance specific, and the visuals purposeful. Launch a campaign,
-              watch behavior flow across the 3D map, and send targeted coaching with zero clutter.
+              Let people experience phishing emails, suspicious links, and response drills inside one playground. Every
+              motion, prompt, and coaching script is crafted to be clicked, tested, and retold.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/auth/signup"
+                href="#experience"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
               >
-                Get Started
+                Explore the Experiences
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/auth/login"
+                href="/auth/signup"
                 className="inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted"
               >
-                Sign In
+                Create Account
               </Link>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             {heroHighlights.map((item) => (
-              <div key={item.title} className="surface-card surface-muted flex flex-col gap-2 p-5">
+              <div key={item.title} className="surface-card flex flex-col gap-3 p-5">
+                <span className="inline-flex size-9 items-center justify-center rounded-full bg-accent/12 text-accent">
+                  <item.icon className="h-4 w-4" />
+                </span>
                 <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
                 <p className="text-sm text-muted">{item.detail}</p>
               </div>
@@ -238,64 +239,57 @@ export default function Home() {
 
         <div className="relative flex flex-col items-center gap-6 md:items-end">
           <ThreatGlobe theme={theme} />
-          <div className="surface-card w-full max-w-[17rem] border border-border/60 p-5 text-left text-xs text-muted">
-            <p className="font-semibold text-foreground">Live risk pulse</p>
+          <div className="surface-card w-full max-w-[18rem] border border-border/60 p-5 text-left text-xs text-muted">
+            <p className="font-semibold text-foreground">Live engagement pulse</p>
             <div className="mt-3 flex items-end gap-3">
-              <span className="text-3xl font-semibold text-accent-soft">3.2</span>
-              <span className="mb-1 text-[0.8rem] uppercase tracking-[0.3em] text-muted">
-                posture delta
-              </span>
+              <span className="text-3xl font-semibold text-accent-soft">86%</span>
+              <span className="mb-1 text-[0.8rem] uppercase tracking-[0.3em] text-muted">reporting rate</span>
             </div>
             <p className="mt-3 leading-relaxed">
-              Signals stream into the globe in real time to highlight locations that still need coaching.
+              As teams play through the labs, the globe lights up with clicks, reports, and successful escalations.
             </p>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-10 md:grid-cols-[0.9fr_1fr] md:items-center">
+      <section id="experience" className="grid gap-10 md:grid-cols-[0.85fr_1fr] md:items-start">
         <div className="grid gap-4">
-          <p className="eyebrow">Design principles</p>
+          <p className="eyebrow">Experience hub</p>
           <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-            Purposeful visuals, fewer panels, and one storyline from send to insight.
+            Launch simulations, scan links, and practice the debrief—in one connected flow.
           </h2>
-        </div>
-        <div className="surface-card grid gap-4 p-8 text-sm text-muted">
-          <p>
-            No more neon dashboards. CyberMirror groups every signal into a single column summary. We pair that tone with
-            the 3D globe so you can instantly see where risky clicks originate while the rest of the interface stays calm.
-          </p>
-          <p>
-            The palette uses quiet blues in light mode and deep ink gradients in dark mode. Typography leans on one weight,
-            generous spacing, and components that stack cleanly on phones and desktops alike.
+          <p className="text-base text-muted">
+            Each tool below is ready to demo during workshops. Switch between phishing emails, link inspector, and
+            incident response scripts without leaving the page.
           </p>
         </div>
+        <ExperienceLab />
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {features.map((feature) => (
-          <article key={feature.title} className="surface-card flex flex-col gap-4 p-6">
+      <section className="grid gap-6 md:grid-cols-3">
+        {toolHighlights.map((card) => (
+          <article key={card.title} className="surface-card flex flex-col gap-4 p-6">
             <span className="inline-flex size-10 items-center justify-center rounded-full bg-accent/12 text-accent">
-              <feature.icon className="h-5 w-5" />
+              <card.icon className="h-5 w-5" />
             </span>
-            <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
-            <p className="text-sm text-muted">{feature.description}</p>
+            <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
+            <p className="text-sm text-muted">{card.detail}</p>
           </article>
         ))}
       </section>
 
-      <section id="how-it-works" className="surface-card grid gap-10 p-10">
+      <section className="surface-card grid gap-10 p-10">
         <div className="grid gap-3">
-          <p className="eyebrow">Run the loop</p>
+          <p className="eyebrow">How the story runs</p>
           <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-            Three steps to keep your people ahead of attackers.
+            Guide your team from curiosity to confident reporting in three beats.
           </h2>
           <p className="text-base text-muted">
-            Everything happens in one interface—no extra tabs, no mystery spreadsheets, and no confusing export workflow.
+            No generic slides. Every beat unlocks an action inside the experience hub so people learn by doing.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
-          {loopSteps.map((step, index) => (
+          {flowSteps.map((step, index) => (
             <article key={step.title} className="flex flex-col gap-3 rounded-2xl border border-border p-6">
               <span className="inline-flex size-10 items-center justify-center rounded-full bg-accent/12 text-sm font-semibold text-accent">
                 {index + 1}
@@ -309,10 +303,10 @@ export default function Home() {
 
       <section className="grid gap-8 md:grid-cols-[minmax(0,1fr)_0.55fr]">
         <div className="surface-card grid gap-6 p-8">
-          <h2 className="text-2xl font-semibold text-foreground">A support layer that stays human.</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Support that keeps the session alive.</h2>
           <p className="text-sm text-muted">
-            We are on every review call until you feel comfortable. Need to prove improvement to leadership? We package the
-            signal into a simple narrative you can retell.
+            We pair your facilitator with our producers, supply the animations, and make sure every experiment ends with
+            a clear action for leadership.
           </p>
           <ul className="grid gap-4 text-sm text-muted">
             {supportPoints.map((point) => (
@@ -329,14 +323,15 @@ export default function Home() {
         <aside className="surface-card grid gap-4 p-6 text-sm text-muted">
           <div className="flex items-center gap-3">
             <Headset className="h-5 w-5 text-accent" />
-            <p className="text-base font-semibold text-foreground">One tap to reach us</p>
+            <p className="text-base font-semibold text-foreground">Talk to a specialist</p>
           </div>
           <p>
-            Dedicated Slack channel or WhatsApp for Business. Our response target is under four working hours, including
-            playbook advice and quick template reviews.
+            Dedicated Slack channel or WhatsApp for Business. We respond inside four working hours with motion tweaks,
+            storyline suggestions, and risk summaries.
           </p>
           <p>
-            Prefer face time? Book a monthly Zoom session with our incident response strategist to refine the next wave.
+            Prefer live coaching? Book a monthly Zoom session with our incident strategist to refine the next interactive
+            lab.
           </p>
         </aside>
       </section>
@@ -347,20 +342,21 @@ export default function Home() {
       >
         <div className="grid gap-4">
           <p className="eyebrow">Get Started</p>
-          <h2 className="text-3xl font-semibold text-foreground">Ready to improve your security posture?</h2>
+          <h2 className="text-3xl font-semibold text-foreground">Ready to host a live cyber awareness lab?</h2>
           <p className="text-sm text-muted">
-            Start your security awareness training journey with CyberMirror today.
+            Spin up your first simulation, invite the team, and walk through the link inspector and response drill within
+            minutes.
           </p>
         </div>
         <div className="flex flex-col gap-3 text-left">
           <Link href="/auth/signup">
-            <button className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5">
+            <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5">
               Create Account
               <ArrowRight className="h-4 w-4" />
             </button>
           </Link>
           <Link href="/auth/login">
-            <button className="w-full inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted">
+            <button className="inline-flex w-full items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted">
               Sign In
             </button>
           </Link>
