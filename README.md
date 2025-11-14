@@ -7,6 +7,7 @@ A comprehensive educational platform for phishing simulation and security awaren
 - **User Authentication**: Secure login/signup with Supabase Auth
 - **Admin Dashboard**: Manage campaigns, users, and view detailed reports
 - **User Dashboard**: Track interactions, view risk scores, and access learning materials
+- **Phishing Simulator**: Create educational phishing links with realistic templates (Instagram, Google, Facebook, LinkedIn, Twitter)
 - **Campaign Management**: Create and manage phishing simulation campaigns
 - **Email System**: Send educational phishing emails with tracking
 - **Landing Pages**: Dynamic landing pages for each campaign with event tracking
@@ -61,7 +62,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 4. Run database migrations:
-The database schema is already set up in Supabase. If you need to apply migrations, use the Supabase dashboard or CLI.
+The database schema is already set up in Supabase. Run the SQL migrations in the `supabase/sql/` directory:
+- `0001_schema.sql` - Base schema
+- `0002_rls.sql` - Row Level Security policies
+- `0003_functions.sql` - Database functions
+- `0004_phishing_links.sql` - Phishing links and submissions tables
+
+You can run these migrations via the Supabase dashboard or CLI.
 
 5. Seed the database (optional):
 ```bash
@@ -106,6 +113,15 @@ src/
 ```
 
 ## Key Features Explained
+
+### Phishing Simulator
+
+The Phishing Simulator allows users to create educational phishing links with realistic templates:
+- **Create Phishing Links**: Generate unique phishing links with customizable templates
+- **Multiple Templates**: Choose from Instagram, Google, Facebook, LinkedIn, Twitter, or Generic templates
+- **Real-time Tracking**: View submissions in real-time, including usernames, passwords, emails, and IP addresses
+- **Educational Warnings**: After submitting data, users see an educational warning explaining how phishing works
+- **Link Management**: Manage all your phishing links from the dashboard, view statistics, and delete links
 
 ### Risk Scoring
 
@@ -156,6 +172,8 @@ The database includes the following tables:
 - `recipients` - Email recipients for campaigns
 - `events` - Tracked user interactions
 - `risk_scores` - Calculated risk scores per user/campaign
+- `phishing_links` - Phishing links created by users
+- `phishing_submissions` - Data submitted through phishing links (for educational purposes)
 
 ## License
 

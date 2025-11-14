@@ -9,12 +9,43 @@ export async function GET(request: NextRequest) {
 
     const { data: campaigns, error } = await supabase
       .from('campaigns')
-      .select('*, recipients(count), events(count)')
+      .select(`
+        *,
+        recipients(count),
+        events(type, id)
+      `)
       .order('created_at', { ascending: false })
 
     if (error) throw error
 
-    return NextResponse.json({ campaigns })
+    // Transform campaigns to include stats
+    const transformedCampaigns = (campaigns || []).map((campaign: any) => {
+      const recipientsCount = campaign.recipients?.[0]?.count || 0
+      const events = campaign.events || []
+      
+      const openedCount = events.filter((e: any) => e.type === 'OPEN').length
+      const clickedCount = events.filter((e: any) => e.type === 'CLICK').length
+      const reportedCount = events.filter((e: any) => e.type === 'REPORT').length
+      
+      // Get sent count from email_logs
+      // For now, we'll use recipients count as sent count
+      const sentCount = recipientsCount
+
+      return {
+        id: campaign.id,
+        title: campaign.title,
+        description: campaign.description,
+        status: 'draft' as const, // You can add status field to campaigns table
+        recipients_count: recipientsCount,
+        sent_count: sentCount,
+        opened_count: openedCount,
+        clicked_count: clickedCount,
+        reported_count: reportedCount,
+        created_at: campaign.created_at,
+      }
+    })
+
+    return NextResponse.json({ campaigns: transformedCampaigns })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 })
   }

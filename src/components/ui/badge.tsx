@@ -3,11 +3,12 @@ import { ReactNode } from 'react'
 interface BadgeProps {
   children: ReactNode
   type?: 'OPEN' | 'CLICK' | 'REPORT' | 'IGNORE' | string
+  variant?: 'default' | 'secondary' | 'outline'
   className?: string
 }
 
-export function Badge({ children, type, className = '' }: BadgeProps) {
-  const palette = getPalette(type)
+export function Badge({ children, type, variant, className = '' }: BadgeProps) {
+  const palette = getPalette(type, variant)
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${palette.background} ${palette.color} ${className}`}
@@ -17,7 +18,17 @@ export function Badge({ children, type, className = '' }: BadgeProps) {
   )
 }
 
-function getPalette(type?: string) {
+function getPalette(type?: string, variant?: string) {
+  if (variant === 'outline') {
+    return { background: 'bg-transparent border border-border', color: 'text-foreground' }
+  }
+  if (variant === 'secondary') {
+    return { background: 'bg-surface-muted', color: 'text-foreground' }
+  }
+  if (variant === 'default') {
+    return { background: 'bg-accent', color: 'text-white' }
+  }
+  
   switch (type) {
     case 'CLICK':
       return { background: 'bg-red-500/10', color: 'text-red-600' }

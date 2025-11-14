@@ -1,13 +1,13 @@
-import { ReactNode } from 'react'
+import { HTMLAttributes, ReactNode } from 'react'
 
-interface CardProps {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
   className?: string
 }
 
-export function Card({ children, className = '' }: CardProps) {
+export function Card({ children, className = '', ...props }: CardProps) {
   return (
-    <div className={`surface-card p-6 ${className}`}>
+    <div className={`surface-card p-6 ${className}`} {...props}>
       {children}
     </div>
   )
@@ -36,4 +36,3 @@ export function CardContent({ children, className = '' }: CardProps) {
     </div>
   )
 }
-

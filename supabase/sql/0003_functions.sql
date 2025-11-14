@@ -1,3 +1,59 @@
+-- Helper function to check if current user is admin (avoids RLS recursion)
+-- Uses SECURITY DEFINER to bypass RLS when checking public.users
+create or replace function public.is_admin()
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+stable
+as $$
+declare
+  v_role text;
+  v_user_id uuid;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    return false;
+  end if;
+  
+  -- Check public.users directly (SECURITY DEFINER bypasses RLS)
+  select role into v_role
+  from public.users
+  where id = v_user_id;
+  
+  return v_role = 'ADMIN';
+end;
+$$;
+
+-- Function to automatically create user profile when auth user is created
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.users (id, email, name, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'name', null),
+    'USER'
+  )
+  on conflict (id) do update
+  set email = excluded.email,
+      name = coalesce(excluded.name, users.name),
+      updated_at = now();
+  return new;
+end;
+$$;
+
+-- Trigger to create user profile on signup
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert or update on auth.users
+  for each row execute function public.handle_new_user();
+
 -- Helper function to recalculate risk score
 
 create or replace function public.recalculate_risk_score(p_user_id uuid, p_campaign_id uuid)

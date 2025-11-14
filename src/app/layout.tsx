@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Arabic } from "next/font/google";
+import { Poppins, Tajawal } from "next/font/google";
 import "./globals.css";
+import { PreferencesProvider } from "@/context/preferences-context";
 
-const inter = Inter({
-  variable: "--font-inter",
+const poppins = Poppins({
+  variable: "--font-poppins",
   display: "swap",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const notoArabic = Noto_Sans_Arabic({
-  variable: "--font-noto-sans-arabic",
+const tajawal = Tajawal({
+  variable: "--font-tajawal",
   display: "swap",
   subsets: ["arabic"],
+  weight: ["300", "400", "500", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -26,12 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body
         data-theme="light"
-        className={`${inter.variable} ${notoArabic.variable} antialiased bg-background text-foreground transition-colors`}
+        data-direction="ltr"
+        data-locale="en"
+        className={`${poppins.variable} ${tajawal.variable} antialiased bg-background text-foreground transition-colors`}
       >
-        {children}
+        <PreferencesProvider>{children}</PreferencesProvider>
       </body>
     </html>
   );
