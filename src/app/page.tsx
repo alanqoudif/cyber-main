@@ -74,7 +74,7 @@ const heroCopy: Record<
 > = {
   en: {
     eyebrow: "Cyber awareness platform",
-    title: "هلا والله",
+    title: "Training that feels like a tier-one operations room",
     description:
       "Recreate the rigor of TryHackMe or BlackHat security teams with phishing campaigns, link scanning, and contextual coaching that keeps every employee alert without overwhelming the UI.",
     primaryCta: "Launch the dashboard",
