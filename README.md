@@ -59,6 +59,10 @@ SMTP_PORT=1025
 SMTP_FROM="CyberMirror <no-reply@cybermirror.local>"
 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+OPENROUTER_API_KEY=your_openrouter_api_key
+# Available free models: google/gemma-2-9b-it:free, meta-llama/llama-3.2-3b-instruct:free, qwen/qwen-2.5-7b-instruct:free
+OPENROUTER_MODEL=google/gemma-2-9b-it:free
 ```
 
 4. Run database migrations:

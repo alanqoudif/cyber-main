@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Shield, LogOut, Megaphone, Globe, Search, Gamepad2, Activity } from 'lucide-react'
+import { Shield, LogOut, Megaphone, Globe, Search, Gamepad2, Activity, Sparkles } from 'lucide-react'
 import { usePreferences } from '@/context/preferences-context'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
@@ -25,6 +25,7 @@ const copy = {
     scanner: 'Scanner',
     threatMap: 'Threat Map',
     cyberGame: 'Cyber Game',
+    aiChat: 'AI Assistant',
     quickScan: 'Quick Scan',
     signOut: 'Sign out'
   },
@@ -39,6 +40,7 @@ const copy = {
     scanner: 'أداة الفحص',
     threatMap: 'خريطة التهديدات',
     cyberGame: 'لعبة السايبر',
+    aiChat: 'مساعد الذكي',
     quickScan: 'فحص سريع',
     signOut: 'تسجيل الخروج'
   }
@@ -107,6 +109,10 @@ export function Navbar({ userRole = 'USER' }: NavbarProps) {
               <Link href="/dashboard/cyber-game" className={sharedLinkStyles('/dashboard/cyber-game')}>
                 <Gamepad2 className="h-4 w-4" />
                 {t.cyberGame}
+              </Link>
+              <Link href="/dashboard/ai-chat" className={sharedLinkStyles('/dashboard/ai-chat')}>
+                <Sparkles className="h-4 w-4" />
+                {t.aiChat}
               </Link>
             </div>
           </div>

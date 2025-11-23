@@ -27,7 +27,8 @@ import {
   Clock,
   Zap,
   Search,
-  Link2
+  Link2,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -446,6 +447,36 @@ export default async function DashboardPage() {
             <Link href="/dashboard/phishing">
               <Button variant="outline" className="mt-6 w-full justify-center rounded-full border-border/60 text-base">
                 <LocaleText en="Create pages" ar="إنشاء صفحات" />
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-3">
+          <div className="rounded-3xl border border-border/50 bg-surface/80 p-8 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-3 text-purple-300">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">
+                  <LocaleText en="AI Security Assistant" ar="مساعد الأمن الذكي" />
+                </h2>
+                <p className="text-sm text-muted">
+                  <LocaleText en="Interactive AI-powered training" ar="تدريب تفاعلي مدعوم بالذكاء الاصطناعي" />
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-muted">
+              <LocaleText
+                en="Practice security scenarios, ask questions, and get personalized guidance on cybersecurity best practices."
+                ar="تدرب على سيناريوهات الأمن، اطرح الأسئلة واحصل على إرشادات مخصصة حول أفضل ممارسات الأمن السيبراني."
+              />
+            </p>
+            <Link href="/dashboard/ai-chat">
+              <Button variant="outline" className="mt-6 w-full justify-center rounded-full border-border/60 text-base">
+                <LocaleText en="Start chatting" ar="ابدأ المحادثة" />
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
