@@ -6,6 +6,90 @@ import { LocaleText } from '@/components/common/LocaleText'
 import { Button } from '@/components/ui/button'
 import { usePreferences } from '@/context/preferences-context'
 
+// Simple markdown formatter for better text display
+function formatMessageContent(content: string): string {
+  // Split content into lines
+  const lines = content.split('\n')
+  const formattedLines: string[] = []
+  let inList = false
+  let listItems: string[] = []
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    
+    // Skip empty lines (will be converted to paragraph breaks)
+    if (!line) {
+      if (inList && listItems.length > 0) {
+        formattedLines.push(`<ul class="list-disc ml-4 space-y-1 my-2">${listItems.join('')}</ul>`)
+        listItems = []
+        inList = false
+      }
+      formattedLines.push('<br />')
+      continue
+    }
+    
+    // Escape HTML
+    let escaped = line
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+    
+    // Convert markdown bold **text** to <strong>
+    escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    
+    // Convert markdown italic *text* to <em> (but not if it's a list item)
+    escaped = escaped.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>')
+    
+    // Convert markdown code `text` to <code>
+    escaped = escaped.replace(/`(.+?)`/g, '<code class="bg-surface/50 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+    
+    // Convert markdown links [text](url) to <a>
+    escaped = escaped.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">$1</a>')
+    
+    // Check for bullet points
+    const bulletMatch = line.match(/^[-•*]\s+(.+)$/)
+    const numberMatch = line.match(/^(\d+)\.\s+(.+)$/)
+    
+    if (bulletMatch) {
+      if (!inList) {
+        inList = true
+      }
+      listItems.push(`<li>${escaped.replace(/^[-•*]\s+/, '')}</li>`)
+    } else if (numberMatch) {
+      if (!inList) {
+        inList = true
+      }
+      listItems.push(`<li>${escaped.replace(/^\d+\.\s+/, '')}</li>`)
+    } else {
+      // End list if we were in one
+      if (inList && listItems.length > 0) {
+        formattedLines.push(`<ul class="list-disc ml-4 space-y-1 my-2">${listItems.join('')}</ul>`)
+        listItems = []
+        inList = false
+      }
+      
+      // Check for headers
+      if (line.startsWith('### ')) {
+        formattedLines.push(`<h3 class="font-semibold text-base mt-4 mb-2">${escaped.replace(/^###\s+/, '')}</h3>`)
+      } else if (line.startsWith('## ')) {
+        formattedLines.push(`<h2 class="font-semibold text-lg mt-4 mb-2">${escaped.replace(/^##\s+/, '')}</h2>`)
+      } else if (line.startsWith('# ')) {
+        formattedLines.push(`<h1 class="font-bold text-xl mt-4 mb-2">${escaped.replace(/^#\s+/, '')}</h1>`)
+      } else {
+        // Regular paragraph
+        formattedLines.push(`<p class="my-2">${escaped}</p>`)
+      }
+    }
+  }
+  
+  // Close any remaining list
+  if (inList && listItems.length > 0) {
+    formattedLines.push(`<ul class="list-disc ml-4 space-y-1 my-2">${listItems.join('')}</ul>`)
+  }
+  
+  return formattedLines.join('')
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -308,9 +392,12 @@ export function AIChat() {
                   : 'bg-surface/70 text-foreground border border-border/50'
               }`}
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {message.content}
-              </p>
+              <div 
+                className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ 
+                  __html: formatMessageContent(message.content) 
+                }}
+              />
               <p className="mt-2 text-xs text-muted">
                 {message.timestamp.toLocaleTimeString(locale === 'ar' ? 'ar-SA' : 'en-US', {
                   hour: '2-digit',
