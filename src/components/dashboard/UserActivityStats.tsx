@@ -10,6 +10,13 @@ interface UserActivityStats {
   clicksCount: number
   lastActivity: string | null
   daysActive: number
+  // Interaction stats (local cache)
+  interactions: number
+  opens: number
+  reports: number
+  riskyLinks: number
+  phishingVisits: number
+  riskLevel: number
 }
 
 const STORAGE_KEY = 'cyber_user_activity'
@@ -35,6 +42,12 @@ function getStoredStats(): UserActivityStats {
         clicksCount: parsed.clicksCount || 0,
         lastActivity: parsed.lastActivity || null,
         daysActive: parsed.daysActive || 0,
+        interactions: parsed.interactions || 0,
+        opens: parsed.opens || 0,
+        reports: parsed.reports || 0,
+        riskyLinks: parsed.riskyLinks || 0,
+        phishingVisits: parsed.phishingVisits || 0,
+        riskLevel: parsed.riskLevel || 0,
       }
     }
   } catch (error) {
@@ -47,6 +60,12 @@ function getStoredStats(): UserActivityStats {
     clicksCount: 0,
     lastActivity: null,
     daysActive: 0,
+    interactions: 0,
+    opens: 0,
+    reports: 0,
+    riskyLinks: 0,
+    phishingVisits: 0,
+    riskLevel: 0,
   }
 }
 
@@ -68,13 +87,29 @@ function updateStats(updates: Partial<UserActivityStats>) {
 }
 
 export function UserActivityStats() {
-  const [stats, setStats] = useState<UserActivityStats>(getStoredStats)
+  // Initialize with default values to avoid hydration mismatch
+  const [stats, setStats] = useState<UserActivityStats>({
+    pageViews: 0,
+    sessionTime: 0,
+    clicksCount: 0,
+    lastActivity: null,
+    daysActive: 0,
+    interactions: 0,
+    opens: 0,
+    reports: 0,
+    riskyLinks: 0,
+    phishingVisits: 0,
+    riskLevel: 0,
+  })
   const [sessionStartTime] = useState(() => Date.now())
   const [currentSessionMinutes, setCurrentSessionMinutes] = useState(0)
 
   useEffect(() => {
-    // Increment page view
+    // Load stats from localStorage on client side only
     const current = getStoredStats()
+    setStats(current)
+    
+    // Increment page view
     const updated = updateStats({
       pageViews: current.pageViews + 1,
       lastActivity: new Date().toISOString(),

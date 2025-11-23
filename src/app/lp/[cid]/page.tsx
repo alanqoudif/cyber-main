@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { AlertTriangle, Shield, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { trackLocalInteraction } from '@/components/dashboard/LocalInteractionStats'
 
 export default function LandingPage() {
   const params = useParams()
@@ -42,12 +43,15 @@ export default function LandingPage() {
     if (campaignId) {
       // Track page open automatically
       trackEvent('OPEN')
+      // Also track locally
+      trackLocalInteraction('OPEN')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId])
 
   const handleReport = async () => {
     await trackEvent('REPORT')
+    trackLocalInteraction('REPORT')
     setHasInteracted(true)
     setInteractionType('REPORT')
   }
@@ -60,6 +64,7 @@ export default function LandingPage() {
 
   const handleLinkClick = () => {
     trackEvent('CLICK', { clickedElement: 'verify_button' })
+    trackLocalInteraction('CLICK')
   }
 
   if (hasInteracted) {

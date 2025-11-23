@@ -30,6 +30,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { trackExperienceEvent } from '@/lib/telemetry'
+import { incrementUrlScan } from '@/lib/local-stats'
 
 type Verdict = 'harmless' | 'suspicious' | 'malicious' | 'unknown'
 
@@ -471,6 +472,7 @@ export function LinksTool() {
       isSample: Boolean(selectedSample),
       sampleId: selectedSample?.id ?? null,
     })
+    incrementUrlScan('started')
 
     setIsScanning(true)
     setAnalysis(null)
@@ -593,6 +595,10 @@ export function LinksTool() {
       sampleId: selectedSample?.id ?? null,
       hasVirusTotal: Boolean(virusTotalResult),
     })
+    incrementUrlScan('completed')
+    if (result.verdict === 'malicious' || result.verdict === 'suspicious') {
+      incrementUrlScan('risky')
+    }
   }
 
   const verdictInfo = analysis ? verdictStyles[analysis.verdict] : null

@@ -11,6 +11,8 @@ import { SnapchatPage } from '@/components/phishing/SnapchatPage'
 import { GenericPage } from '@/components/phishing/GenericPage'
 import { EducationalWarning } from '@/components/phishing/EducationalWarning'
 import { usePreferences } from '@/context/preferences-context'
+import { trackLocalInteraction } from '@/components/dashboard/LocalInteractionStats'
+import { getLocalStats, updateLocalStats } from '@/lib/local-stats'
 
 export default function PhishingPage() {
   const params = useParams()
@@ -35,6 +37,8 @@ export default function PhishingPage() {
 
   useEffect(() => {
     loadLink()
+    // Track phishing page visit
+    trackLocalInteraction('PHISHING_VISIT')
   }, [slug])
 
   const loadLink = async () => {
@@ -71,6 +75,13 @@ export default function PhishingPage() {
         // حفظ البيانات في localStorage للعبة الواتساب
         if (typeof window !== 'undefined') {
           localStorage.setItem('phishingSubmission', JSON.stringify(data))
+          
+          // تحديث إحصائيات التصيد المحلية
+          const current = getLocalStats()
+          updateLocalStats({
+            phishingSubmissions: (current.phishingSubmissions || 0) + 1,
+            phishingLinks: current.phishingLinks || 0,
+          })
           
           // إرسال custom event أيضاً للتوافق
           const event = new CustomEvent('phishingDataSubmitted', {
