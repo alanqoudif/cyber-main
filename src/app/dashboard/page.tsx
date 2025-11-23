@@ -10,6 +10,7 @@ import { StealthScoreDisplay } from '@/components/user/StealthScoreDisplay'
 import { AutoInjectTrigger } from '@/components/user/AutoInjectTrigger'
 import { EducationalVideos } from '@/components/user/EducationalVideos'
 import { LocaleText } from '@/components/common/LocaleText'
+import { UserActivityStats } from '@/components/dashboard/UserActivityStats'
 import { 
   History, 
   ShieldCheck, 
@@ -414,6 +415,10 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </section>
+
+        <div className="mt-10">
+          <UserActivityStats />
+        </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-surface/80 p-6 shadow-lg">
