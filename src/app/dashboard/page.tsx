@@ -38,6 +38,21 @@ export default async function DashboardPage() {
 
   const supabase = await createClient()
 
+  // Fetch ALL events for accurate statistics calculation
+  const { data: allEventsRaw } = await supabase
+    .from('events')
+    .select(`
+      id, 
+      type, 
+      created_at, 
+      campaign_id,
+      meta,
+      campaigns(title)
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  // Fetch limited events for display (last 20)
   const { data: eventsRaw } = await supabase
     .from('events')
     .select(`
@@ -52,6 +67,20 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Fetch ALL risk scores for accurate statistics calculation
+  const { data: allRiskScoresRaw } = await supabase
+    .from('risk_scores')
+    .select(`
+      id, 
+      score, 
+      updated_at, 
+      campaign_id,
+      campaigns(title)
+    `)
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+
+  // Fetch limited risk scores for display (last 10)
   const { data: riskScoresRaw } = await supabase
     .from('risk_scores')
     .select(`
@@ -65,6 +94,63 @@ export default async function DashboardPage() {
     .order('updated_at', { ascending: false })
     .limit(10)
 
+  // Fetch experience events for game and URL scan statistics
+  const { data: experienceEventsRaw } = await supabase
+    .from('experience_events')
+    .select('id, event, payload, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  // Fetch link scans from user's campaigns
+  const { data: userCampaigns } = await supabase
+    .from('campaigns')
+    .select('id')
+    .eq('created_by', user.id)
+
+  const campaignIds = (userCampaigns ?? []).map(c => c.id)
+  
+  let linkScansRaw: any[] = []
+  if (campaignIds.length > 0) {
+    const { data } = await supabase
+      .from('link_scans')
+      .select('id, url, status, risk_label, created_at')
+      .in('campaign_id', campaignIds)
+      .order('created_at', { ascending: false })
+    linkScansRaw = data ?? []
+  }
+
+  // Fetch phishing links created by user
+  const { data: phishingLinksRaw } = await supabase
+    .from('phishing_links')
+    .select('id, slug, name, template_type, visits, submissions_count, created_at')
+    .eq('created_by', user.id)
+    .order('created_at', { ascending: false })
+
+  // Fetch phishing submissions for user's links
+  const phishingLinkIds = (phishingLinksRaw ?? []).map(link => link.id)
+  let phishingSubmissionsRaw: any[] = []
+  if (phishingLinkIds.length > 0) {
+    const { data } = await supabase
+      .from('phishing_submissions')
+      .select('id, phishing_link_id, created_at')
+      .in('phishing_link_id', phishingLinkIds)
+      .order('created_at', { ascending: false })
+    phishingSubmissionsRaw = data ?? []
+  }
+
+  // Map all events for statistics
+  const allEvents: InteractionEntry[] = (allEventsRaw ?? []).map((event: any) => {
+    const campaign = event.campaigns as { title?: string | null } | null | undefined
+    return {
+      id: event.id,
+      type: event.type,
+      created_at: event.created_at,
+      campaign: campaign?.title ?? null,
+      meta: event.meta ?? null,
+    }
+  })
+
+  // Map limited events for display
   const events: InteractionEntry[] = (eventsRaw ?? []).map((event: any) => {
     const campaign = event.campaigns as { title?: string | null } | null | undefined
     return {
@@ -76,6 +162,18 @@ export default async function DashboardPage() {
     }
   })
 
+  // Map all risk scores for statistics
+  const allRiskScores: RiskScoreEntry[] = (allRiskScoresRaw ?? []).map((score: any) => {
+    const campaign = score.campaigns as { title?: string | null } | null | undefined
+    return {
+      id: score.id,
+      score: score.score,
+      updated_at: score.updated_at,
+      campaign: campaign?.title ?? null,
+    }
+  })
+
+  // Map limited risk scores for display
   const riskScores: RiskScoreEntry[] = (riskScoresRaw ?? []).map((score: any) => {
     const campaign = score.campaigns as { title?: string | null } | null | undefined
     return {
@@ -86,24 +184,65 @@ export default async function DashboardPage() {
     }
   })
 
-  // Calculate statistics
-  const totalEvents = events.length
-  const reportedCount = events.filter(e => e.type === 'REPORT').length
-  const clickedCount = events.filter(e => e.type === 'CLICK').length
-  const openedCount = events.filter(e => e.type === 'OPEN').length
+  // Calculate statistics using ALL data
+  const totalEvents = allEvents.length
+  const reportedCount = allEvents.filter(e => e.type === 'REPORT').length
+  const clickedCount = allEvents.filter(e => e.type === 'CLICK').length
+  const openedCount = allEvents.filter(e => e.type === 'OPEN').length
   // Calculate percentages
   const reportRate = totalEvents > 0 ? Math.round((reportedCount / totalEvents) * 100) : 0
   const clickRate = totalEvents > 0 ? Math.round((clickedCount / totalEvents) * 100) : 0
+
+  // Calculate URL scan statistics from experience events
+  const urlScanEvents = (experienceEventsRaw ?? []).filter(
+    e => e.event === 'link_scan_started' || e.event === 'link_scan_completed'
+  )
+  const urlScansStarted = (experienceEventsRaw ?? []).filter(e => e.event === 'link_scan_started').length
+  const urlScansCompleted = (experienceEventsRaw ?? []).filter(e => e.event === 'link_scan_completed').length
+  const totalUrlScans = urlScansStarted // Total scans initiated
+  const completedUrlScans = urlScansCompleted
+  const urlScansFromCampaigns = (linkScansRaw ?? []).length
+  const totalUrlScansCount = totalUrlScans + urlScansFromCampaigns
+
+  // Calculate game statistics from experience events
+  const gameEvents = (experienceEventsRaw ?? []).filter(
+    e => e.event === 'phishing_clue_revealed' || 
+         e.event === 'phishing_decision_made' || 
+         e.event === 'phishing_drill_reset'
+  )
+  const gameCluesRevealed = (experienceEventsRaw ?? []).filter(e => e.event === 'phishing_clue_revealed').length
+  const gameDecisionsMade = (experienceEventsRaw ?? []).filter(e => e.event === 'phishing_decision_made').length
+  const gameDrillsReset = (experienceEventsRaw ?? []).filter(e => e.event === 'phishing_drill_reset').length
+  const totalGameInteractions = gameEvents.length
+
+  // Calculate risky URL scans (from link_scans with high risk labels)
+  const riskyUrlScans = (linkScansRaw ?? []).filter(
+    scan => scan.risk_label === 'malicious' || scan.risk_label === 'suspicious'
+  ).length
+
+  // Calculate phishing statistics
+  const totalPhishingLinks = (phishingLinksRaw ?? []).length
+  const totalPhishingVisits = (phishingLinksRaw ?? []).reduce((sum, link) => sum + (link.visits || 0), 0)
+  const totalPhishingSubmissions = phishingSubmissionsRaw.length
+  const activePhishingLinks = (phishingLinksRaw ?? []).filter(link => (link.submissions_count || 0) > 0).length
+  const phishingLinksByTemplate = (phishingLinksRaw ?? []).reduce((acc, link) => {
+    const template = link.template_type || 'unknown'
+    acc[template] = (acc[template] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
   
-  // Risk calculations
-  const totalRisk = riskScores.reduce((sum, score) => sum + score.score, 0)
-  const averageRisk = riskScores.length > 0 ? Math.round(totalRisk / riskScores.length) : 0
+  // Risk calculations using ALL risk scores
+  const totalRisk = allRiskScores.reduce((sum, score) => sum + score.score, 0)
+  const averageRisk = allRiskScores.length > 0 ? Math.round(totalRisk / allRiskScores.length) : 0
   const riskLevel = getRiskLevel(averageRisk)
   const riskColorClass = getRiskColor(averageRisk)
   
-  // Calculate improvement trend (compare last 5 vs previous 5)
-  const recentScores = riskScores.slice(0, 5)
-  const olderScores = riskScores.slice(5, 10)
+  // Calculate improvement trend (compare last 5 vs previous 5) using all scores
+  const sortedAllScores = [...allRiskScores].sort((a, b) => 
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  )
+  const recentScores = sortedAllScores.slice(0, 5)
+  const olderScores = sortedAllScores.slice(5, 10)
   const recentAvg = recentScores.length > 0 
     ? Math.round(recentScores.reduce((sum, s) => sum + s.score, 0) / recentScores.length)
     : 0
@@ -112,12 +251,12 @@ export default async function DashboardPage() {
     : 0
   const riskTrend = recentAvg > 0 && olderAvg > 0 ? recentAvg - olderAvg : 0
   
-  // Calculate response time (average time between OPEN and REPORT/CLICK)
+  // Calculate response time (average time between OPEN and REPORT/CLICK) using all events
   const responseTimes: number[] = []
-  events.forEach((event) => {
+  allEvents.forEach((event) => {
     if (event.type === 'OPEN') {
       // Find the next REPORT or CLICK event for the same campaign
-      const nextAction = events.find(e => 
+      const nextAction = allEvents.find(e => 
         e.campaign === event.campaign && 
         (e.type === 'REPORT' || e.type === 'CLICK') &&
         new Date(e.created_at).getTime() > new Date(event.created_at).getTime()
@@ -176,9 +315,20 @@ export default async function DashboardPage() {
                 <p className="text-xs uppercase tracking-[0.4em] text-muted">
                   <LocaleText en="Interactions" ar="تفاعلات" />
                 </p>
-                <p className="mt-2 text-3xl font-semibold">{totalEvents}</p>
+                <p className="mt-2 text-3xl font-semibold">{totalEvents + totalGameInteractions}</p>
                 <p className="text-xs text-muted">
-                  <LocaleText en={`${openedCount} opens / ${reportedCount} reports`} ar={`${openedCount} فتح / ${reportedCount} إبلاغ`} />
+                  <LocaleText 
+                    en={`${openedCount} opens / ${reportedCount} reports`} 
+                    ar={`${openedCount} فتح / ${reportedCount} إبلاغ`} 
+                  />
+                  {totalGameInteractions > 0 && (
+                    <span className="block mt-1">
+                      <LocaleText 
+                        en={`+ ${totalGameInteractions} game`} 
+                        ar={`+ ${totalGameInteractions} لعبة`} 
+                      />
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/50 bg-surface/70 p-4">
@@ -187,7 +337,18 @@ export default async function DashboardPage() {
                 </p>
                 <p className="mt-2 text-3xl font-semibold">{clickRate}%</p>
                 <p className="text-xs text-muted">
-                  <LocaleText en={`${clickedCount} risky links`} ar={`${clickedCount} روابط حساسة`} />
+                  <LocaleText 
+                    en={`${clickedCount} risky links`} 
+                    ar={`${clickedCount} روابط حساسة`} 
+                  />
+                  {totalPhishingVisits > 0 && (
+                    <span className="block mt-1">
+                      <LocaleText 
+                        en={`${totalPhishingVisits} phishing visits`} 
+                        ar={`${totalPhishingVisits} زيارة تصيد`} 
+                      />
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/50 bg-surface/70 p-4">
@@ -200,6 +361,14 @@ export default async function DashboardPage() {
                     en={riskLevel === 'low' ? 'Low' : riskLevel === 'medium' ? 'Medium' : 'High'}
                     ar={riskLevel === 'low' ? 'منخفض' : riskLevel === 'medium' ? 'متوسط' : 'عالي'}
                   />
+                  {riskyUrlScans > 0 && (
+                    <span className="block mt-1 text-yellow-400">
+                      <LocaleText 
+                        en={`${riskyUrlScans} risky scans`} 
+                        ar={`${riskyUrlScans} فحص خطير`} 
+                      />
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -246,18 +415,24 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-surface/80 p-6 shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
             <div className="relative z-10 space-y-2">
               <p className="text-xs uppercase tracking-[0.4em] text-muted">
                 <LocaleText en="Total interactions" ar="إجمالي التفاعلات" />
               </p>
-              <p className="text-3xl font-semibold">{totalEvents}</p>
+              <p className="text-3xl font-semibold">{totalEvents + totalGameInteractions}</p>
               {totalEvents > 0 && (
                 <p className="text-xs text-muted flex items-center gap-1">
                   <Activity className="h-3 w-3" />
                   <LocaleText en={`${openedCount} opens / ${reportedCount} reports`} ar={`${openedCount} فتح / ${reportedCount} إبلاغ`} />
+                </p>
+              )}
+              {totalGameInteractions > 0 && (
+                <p className="text-xs text-muted flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  <LocaleText en={`${totalGameInteractions} game interactions`} ar={`${totalGameInteractions} تفاعل في اللعبة`} />
                 </p>
               )}
             </div>
@@ -299,21 +474,98 @@ export default async function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/15 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
             <div className="relative z-10 space-y-2">
               <p className="text-xs uppercase tracking-[0.4em] text-muted">
-                <LocaleText en="Links clicked" ar="روابط تم النقر عليها" />
+                <LocaleText en="Phishing Pages" ar="صفحات التصيد" />
               </p>
-              <p className="text-3xl font-semibold">{clickedCount}</p>
+              <p className="text-3xl font-semibold">{totalPhishingLinks}</p>
               <p className="text-xs text-yellow-400">
-                <LocaleText en={`${clickRate}% of interactions`} ar={`${clickRate}% من كل التفاعلات`} />
+                <LocaleText 
+                  en={`${totalPhishingVisits} visits`} 
+                  ar={`${totalPhishingVisits} زيارة`} 
+                />
+                {totalPhishingSubmissions > 0 && (
+                  <span className="block mt-1">
+                    <LocaleText 
+                      en={`${totalPhishingSubmissions} submissions`} 
+                      ar={`${totalPhishingSubmissions} إرسال`} 
+                    />
+                  </span>
+                )}
               </p>
             </div>
-            {clickedCount > 0 && (
+            {totalPhishingLinks > 0 && (
               <div className="relative z-10 mt-4 flex items-center gap-2 text-xs text-muted">
-                <AlertTriangle className="h-3 w-3 text-yellow-400" />
-                <LocaleText en="Double down on upcoming coaching nudges" ar="ركّز على رسائل التوعية التالية" />
+                <Link2 className="h-3 w-3 text-yellow-400" />
+                <LocaleText 
+                  en={`${activePhishingLinks} active pages`} 
+                  ar={`${activePhishingLinks} صفحة نشطة`} 
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-surface/80 p-6 shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+            <div className="relative z-10 space-y-2">
+              <p className="text-xs uppercase tracking-[0.4em] text-muted">
+                <LocaleText en="URL Scans" ar="فحوصات الروابط" />
+              </p>
+              <p className="text-3xl font-semibold">{totalUrlScansCount}</p>
+              <p className="text-xs text-blue-400">
+                <LocaleText 
+                  en={`${completedUrlScans} completed`} 
+                  ar={`${completedUrlScans} مكتمل`} 
+                />
+                {riskyUrlScans > 0 && (
+                  <span className="block mt-1 text-red-400">
+                    <LocaleText 
+                      en={`${riskyUrlScans} risky`} 
+                      ar={`${riskyUrlScans} خطير`} 
+                    />
+                  </span>
+                )}
+              </p>
+            </div>
+            {totalUrlScansCount > 0 && (
+              <div className="relative z-10 mt-4 flex items-center gap-2 text-xs text-muted">
+                <Search className="h-3 w-3 text-blue-400" />
+                <LocaleText 
+                  en={`${clickedCount} links clicked`} 
+                  ar={`${clickedCount} رابط تم النقر عليه`} 
+                />
               </div>
             )}
           </div>
 
+          <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-surface/80 p-6 shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/15 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+            <div className="relative z-10 space-y-2">
+              <p className="text-xs uppercase tracking-[0.4em] text-muted">
+                <LocaleText en="Game Activity" ar="نشاط اللعبة" />
+              </p>
+              <p className="text-3xl font-semibold">{totalGameInteractions}</p>
+              <p className="text-xs text-purple-400">
+                <LocaleText 
+                  en={`${gameDecisionsMade} decisions`} 
+                  ar={`${gameDecisionsMade} قرار`} 
+                />
+                {gameCluesRevealed > 0 && (
+                  <span className="block mt-1">
+                    <LocaleText 
+                      en={`${gameCluesRevealed} clues revealed`} 
+                      ar={`${gameCluesRevealed} دليل تم الكشف عنه`} 
+                    />
+                  </span>
+                )}
+              </p>
+            </div>
+            {totalGameInteractions > 0 && (
+              <div className="relative z-10 mt-4 flex items-center gap-2 text-xs text-muted">
+                <Award className="h-3 w-3 text-purple-400" />
+                <LocaleText en="Keep practicing!" ar="استمر في التدريب!" />
+              </div>
+            )}
+          </div>
+          
           <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-surface/80 p-6 shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
             <div className="relative z-10 space-y-2">
